@@ -9,7 +9,7 @@
   {:happiness 100})
 
 (defn update-state [state]
-  (assoc state :happiness 100))
+  (assoc state :happiness 80))
 
 (defn draw-eye [size openness]
   (let [corner 10]
@@ -31,7 +31,7 @@
         (draw-eye size openness)))))
 
 (defn draw-mouth [smile]
-  (let [size 80
+  (let [size 60
         corner 30
         smile (/ smile 2)]
     (q/bezier (- size) 0
@@ -39,16 +39,56 @@
               (- size corner) smile
               size 0)))
 
+(defn draw-ear []
+  (let [width 40
+        height 120
+        tip-pos (/ width 0.5)
+        y-low 20
+        y-high (- 70)]
+    (q/bezier (- width) y-low
+              (- tip-pos) (- height)
+              (- tip-pos) (- height)
+              width y-high)))
+
+(defn draw-ears []
+  (let [spacing 80]
+    (q/with-translation [(- spacing) 0]
+      (draw-ear))
+    (q/with-translation [spacing 0]
+      (q/scale -1 1)
+      (draw-ear))))
+
+(defn draw-whiskers []
+  (let [spacing 40
+        whiskers (fn []
+                   (q/line (- 0 spacing 115) 0 (- 0 spacing 5) -10)
+                   (q/line (- 0 spacing 110) 20 (- 0 spacing) 10)
+                   (q/line (- 0 spacing 115) 45 (- 0 spacing 5)  30))]
+    (q/with-translation [(- spacing) 0]
+      (whiskers))
+    (q/with-translation [spacing 0]
+      (q/scale -1 1)
+      (whiskers))))
+
 (defn draw-face [{:keys [happiness] :as state}]
-  (let [axis1 200
-        axis2 250
+  (let [axis1 240
+        axis2 axis1
         eyes-pos [0 -40]
-        mouth-pos [0 30]]
+        mouth-pos [0 30]
+        ears-pos [0 -40]
+        whiskers-pos [0 30]
+        ]
+    (q/with-translation ears-pos
+      (draw-ears))
     (q/ellipse 0 0 axis1 axis2)
     (q/with-translation eyes-pos
       (draw-eyes happiness))
     (q/with-translation mouth-pos
-      (draw-mouth happiness))))
+      (draw-mouth happiness))
+    (q/with-translation whiskers-pos
+      (draw-whiskers)
+      )
+    ))
 
 (defn draw-state [state]
   (q/background 240)
