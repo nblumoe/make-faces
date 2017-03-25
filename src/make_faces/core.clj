@@ -5,38 +5,50 @@
 (defn setup []
   (q/frame-rate 30)
   (q/color-mode :hsb)
-  {:color 0
-   :angle 0})
+  ;; happiness should be in [-100, 100]
+  {:happiness 100})
 
 (defn update-state [state]
-  state)
+  (assoc state :happiness 100))
 
-(defn draw-eyes [_]
-  (let [size 60
+(defn draw-eye [size openness]
+  (let [corner 10]
+    (q/bezier (- size) 0
+              (- corner size) openness
+              (- size corner) openness
+              size     0)))
+
+(defn draw-eyes [openness]
+  (let [size 30
         spacing 40
-        start Math/PI
-        stop (* 2 Math/PI)
-        tilt -0.3]
+        tilt -0.3
+        openness (/ openness -2.5)]
     (q/with-rotation [tilt]
-      (q/arc (* -1 spacing) 0 size size start stop :open))
+      (q/with-translation [(- spacing) 0]
+        (draw-eye size openness)))
     (q/with-rotation [(- tilt)]
-      (q/arc spacing 0 size size start stop :open))))
+      (q/with-translation [spacing 0]
+        (draw-eye size openness)))))
 
-(defn draw-mouth [_]
-  (let [size 120
-        start (* 0.1 Math/PI)
-        stop (* 0.9 Math/PI)]
-    (q/arc 0 0 size size start stop :open)))
+(defn draw-mouth [smile]
+  (let [size 80
+        corner 30
+        smile (/ smile 2)]
+    (q/bezier (- size) 0
+              (- corner size) smile
+              (- size corner) smile
+              size 0)))
 
-(defn draw-face [state]
+(defn draw-face [{:keys [happiness] :as state}]
   (let [axis1 200
-        axis2 axis1]
+        axis2 250
+        eyes-pos [0 -40]
+        mouth-pos [0 30]]
     (q/ellipse 0 0 axis1 axis2)
-    (q/with-translation [0 -30]
-      (draw-eyes state))
-    (q/with-translation [0 20]
-      (draw-mouth state))
-    ))
+    (q/with-translation eyes-pos
+      (draw-eyes happiness))
+    (q/with-translation mouth-pos
+      (draw-mouth happiness))))
 
 (defn draw-state [state]
   (q/background 240)
@@ -47,9 +59,9 @@
 
 (q/defsketch make-faces
   :title "Clojure makes happy faces"
-  :size [500 500]
+  :size [800 800]
   :setup setup
   :update update-state
   :draw draw-state
   :features [:keep-on-top]
-  :middleware [m/fun-mode])
+  :middleware [m/fun-mode m/pause-on-error])
